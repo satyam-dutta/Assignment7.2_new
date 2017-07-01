@@ -1,0 +1,52 @@
+emp_det = load 'employee_details.txt' using PigStorage(',') as (emp_no:int,emp_name:chararray,sal:int,rate:int);
+
+dump emp_det;
+
+emp_exp = load 'employee_expenses.txt' using PigStorage(' ') as (emp_no:int,emp_exp:int);
+
+dump emp_exp;
+
+ord_hi_rate = order emp_det by rate desc, emp_name;
+
+sol1_all = foreach ord_hi_rate generate emp_no,emp_name;
+
+sol1 = limit sol1_all 5;
+
+dump sol1;
+
+emp_cat = foreach emp_det generate emp_no,(
+	case emp_no%2
+	    when 0 then 'even'
+	    when 1 then 'odd'
+	end
+) as category;
+
+join_hi_sal_emp_cat =join emp_det by emp_no, emp_cat by emp_no;
+
+flt_join = filter join_hi_sal_emp_cat by emp_cat::category == 'odd';
+
+ord_hi_sal_odd = order flt_join by sal desc, emp_name;
+
+sol2_all = foreach ord_hi_sal_odd generate emp_det::emp_no, emp_det::emp_name;
+
+sol2 = limit sol2_all 3;
+
+join_det_exp = join emp_det by emp_no, emp_exp by emp_no;
+
+grp_ord_grp_join = group join_det_exp by emp_exp::emp_exp;
+
+ord_grp_join = order grp_ord_grp_join by group desc;
+
+sol3 = limit ord_grp_join 1;
+
+sol4 = foreach join_det_exp generate emp_det::emp_no,emp_det::emp_name;
+
+left_outer_join = join emp_det by emp_no left outer, sol4 by emp_det::emp_no;
+
+sol5 = filter left_outer_join by emp_det::emp_name is null;
+
+
+
+
+
+
